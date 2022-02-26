@@ -9,15 +9,21 @@ public class GameMasterScript : NetworkComponent
 
     public override void HandleMessage(string flag, string value)
     {
-        if(flag == "GAMESTARTED")
+        if(flag == "GAMESTART")
         {
             gameStarted = true;
+            Debug.Log("In GameMaster - GAMESTART");
             foreach ( BingoPlayer bp in GameObject.FindObjectsOfType<BingoPlayer>())
             {
                 bp.transform.GetChild(0).gameObject.SetActive(false);
                 bp.bingoTitleText.SetActive(true);
                 bp.bingoNameText.gameObject.SetActive(true);
                 bp.bingoBoardPanel.SetActive(true);
+
+                Debug.Log("Child 0 -   " + bp.transform.GetChild(0).gameObject.activeSelf);
+                Debug.Log("Title Text -  " + bp.bingoTitleText.activeSelf);
+                Debug.Log("Name Text -   " + bp.bingoNameText.gameObject.activeSelf);
+                Debug.Log("BoardPanel -   " + bp.bingoBoardPanel.activeSelf);
             }
         }
     }
@@ -47,6 +53,8 @@ public class GameMasterScript : NetworkComponent
                 readyGo = false;
             }
             gameStarted = readyGo;
+            Debug.Log(gameStarted);
+            Debug.Log(GameObject.FindObjectsOfType<BingoPlayer>().Length);
             yield return new WaitForSeconds(2f);
         }
         while (IsServer)
@@ -57,8 +65,9 @@ public class GameMasterScript : NetworkComponent
                 SendUpdate("GAMESTART", gameStarted.ToString());
                 IsDirty = false;
             }
+            yield return new WaitForSeconds(0.1f);
         }
-        yield return new WaitForSeconds(0.1f);
+        
     }
 
     // Start is called before the first frame update

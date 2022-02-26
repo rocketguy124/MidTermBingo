@@ -71,14 +71,19 @@ public class BingoPlayer : NetworkComponent
                     readyToggle.interactable = true;
                 }
             }
-            if (IsDirty)
+            if (IsServer)
             {
-                SendUpdate("NAME", name);
-                SendUpdate("READY", isReady.ToString());
-                IsDirty = false;
+                if (IsDirty)
+                {
+                    SendUpdate("NAME", name);
+                    SendUpdate("READY", isReady.ToString());
+                    IsDirty = false;
+                }
             }
+            
+            yield return new WaitForSeconds(0.1f);
         }
-        yield return new WaitForSeconds(0.1f);
+        
     }
 
     // Start is called before the first frame update
@@ -116,6 +121,7 @@ public class BingoPlayer : NetworkComponent
         if(IsLocalPlayer && MyId.IsInit  && isNamed)
         {
             SendCommand("READY", r.ToString());
+            Debug.Log(r);
         }
     }
 }
