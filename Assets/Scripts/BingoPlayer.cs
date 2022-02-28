@@ -16,6 +16,9 @@ public class BingoPlayer : NetworkComponent
     public GameObject bingoTitleText;
     public GameObject bingoBoardPanel;
 
+    public Text[,] bingoNumbers = new Text[5,5];
+    public Text bingoNumberText;
+
     public override void HandleMessage(string flag, string value)
     {
         if(flag == "NAME")
@@ -43,12 +46,56 @@ public class BingoPlayer : NetworkComponent
             {
                 SendUpdate("READY", value);
             }
+            if (IsLocalPlayer)
+            {
+                gameObject.GetComponent<Image>().color = new Color32(0, 0, 255, 128);
+            }
+        }
+        if(flag == "CREATETEXT" && IsServer)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    bingoNumbers[j, i] = MyCore.NetCreateObject(1, this.Owner, this.transform.position, Quaternion.identity).GetComponent<Text>();
+                    //bingoNumbers[j, i] = bingoNumberText.GetComponent<Text>();
+                    bingoNumbers[j, i].transform.SetParent(this.gameObject.transform.GetChild(2).transform);
+                }
+            }
+                    
         }
     }
 
     public override void NetworkedStart()
     {
-        
+        SendCommand("CREATETEXT", Owner.ToString());
+
+        int randomNum = 0;
+        for (int i = 0; i < 5; i++)
+        {
+            for (int j = 0; j < 5; j++)
+            {
+                switch (i)
+                {
+                    case 0:
+                        randomNum = Random.Range(1, 16);
+                        break;
+                    case 1:
+                        randomNum = Random.Range(16, 31);
+                        break;
+                    case 2:
+                        randomNum = Random.Range(31, 46);
+                        break;
+                    case 3:
+                        randomNum = Random.Range(46, 61);
+                        break;
+                    case 4:
+                        randomNum = Random.Range(61, 76);
+                        break;
+                }
+                bingoNumbers[j, i].text = randomNum.ToString();
+            }
+        }
     }
 
     public override IEnumerator SlowUpdate()
@@ -90,7 +137,9 @@ public class BingoPlayer : NetworkComponent
     void Start()
     {
         GameObject temp = GameObject.Find("GameCanvas");
-        if(temp == null)
+
+
+        if (temp == null)
         {
             Debug.Log("'GameCanvas' not found!");
         }
@@ -98,6 +147,22 @@ public class BingoPlayer : NetworkComponent
         {
             this.transform.SetParent(temp.transform);
         }
+
+
+        /*
+        for (int i = 0; i < 5; i++)
+        {
+            for (int j = 0; j < 5; j++)
+            {
+                if (IsClient)
+                {
+                    SendCommand("CREATETEXT",Owner.ToString());
+                }
+                bingoNumbers[j, i] = MyCore.NetCreateObject(1, this.Owner, this.transform.position, Quaternion.identity).GetComponent<Text>();
+                //bingoNumbers[j, i] = bingoNumberText.GetComponent<Text>();
+                bingoNumbers[j, i].transform.SetParent(this.gameObject.transform.GetChild(2).transform);
+            }
+        }*/
     }
 
     // Update is called once per frame

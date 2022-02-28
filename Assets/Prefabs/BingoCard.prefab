@@ -1311,6 +1311,7 @@ MonoBehaviour:
   bingoNameText: {fileID: 5585560807835949624}
   bingoTitleText: {fileID: 1367092960729975058}
   bingoBoardPanel: {fileID: 7120725188509655611}
+  bingoNumberText: {fileID: 5546080553097109166, guid: 0eacb3ab1a20f9749affa05df51058de, type: 3}
 --- !u!1 &4907886521763911743
 GameObject:
   m_ObjectHideFlags: 0
@@ -1706,6 +1707,7 @@ GameObject:
   - component: {fileID: 7686324084525611178}
   - component: {fileID: 233940813595471624}
   - component: {fileID: 338137080210840886}
+  - component: {fileID: 748601713274826488}
   m_Layer: 5
   m_Name: BingoBoardPanel
   m_TagString: Untagged
@@ -1770,6 +1772,30 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &748601713274826488
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7120725188509655611}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 100, y: 100}
+  m_Spacing: {x: 0, y: 0}
+  m_Constraint: 1
+  m_ConstraintCount: 5
 --- !u!1 &7416915664621187079
 GameObject:
   m_ObjectHideFlags: 0
