@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using NETWORK_ENGINE;
 using UnityEngine.UI;
+using System.Linq;
 
 public class GameMasterScript : NetworkComponent
 {
@@ -12,10 +13,12 @@ public class GameMasterScript : NetworkComponent
 
     public Text temptext;
 
+    public static bool winnerFound = false;
     public int randomNum;
 
     public override void HandleMessage(string flag, string value)
     {
+        Debug.Log(flag + value);
         if (flag == "GAMESTART")
         {
             gameStarted = true;
@@ -27,12 +30,6 @@ public class GameMasterScript : NetworkComponent
                 bp.bingoTitleText.SetActive(true);
                 bp.bingoNameText.gameObject.SetActive(true);
                 bp.bingoBoardPanel.SetActive(true);
-                /*
-                Debug.Log("Child 0 -   " + bp.transform.GetChild(0).gameObject.activeSelf);
-                Debug.Log("Title Text -  " + bp.bingoTitleText.activeSelf);
-                Debug.Log("Name Text -   " + bp.bingoNameText.gameObject.activeSelf);
-                Debug.Log("BoardPanel -   " + bp.bingoBoardPanel.activeSelf);
-                */
             }
         }
         if (flag == "CALL")
@@ -47,69 +44,10 @@ public class GameMasterScript : NetworkComponent
                 //Debug.Log("In the Client CALL flag");
                 calledNumberText.text = "Number called: " + value;
             }
-        }/*
-        if(flag == "SETBOARD")
+        }
+        if(flag == "WINF")
         {
-            Debug.Log("Here  in SETBOARD");
-            foreach (BingoPlayer bp in GameObject.FindObjectsOfType<BingoPlayer>())
-            {
-                for (int i = 0; i < 5; i++)
-                {
-                    for (int j = 0; j < 5; j++)
-                    {
-                        bp.bingoNumbers[j, i] = MyCore.NetCreateObject(1, this.Owner, this.transform.position, Quaternion.identity).GetComponent<Text>();
-
-                        //bingoNumbers[j, i] = Instantiate(bingoNumberText).GetComponent<Text>();
-                        bp.bingoNumbers[j, i].transform.SetParent(this.gameObject.transform.GetChild(2).transform);
-                    }
-                }
-            }
-        }*/
-        if (flag == "RANDNUM")
-        {
-            //BingoPlayer.
-            if (IsServer && value == "one")
-            {
-                int randNum = 0;
-                Debug.Log("In the SlowUpdate of GameMaster right before object renumbering");
-                foreach (BingoPlayer bp in GameObject.FindObjectsOfType<BingoPlayer>())
-                {
-                    Debug.Log("Creating bingo card");
-                    for (int i = 0; i < 5; i++)
-                    {
-                        for (int j = 0; j < 5; j++)
-                        {
-                            switch (i)
-                            {
-                                case 0:
-                                    randomNum = Random.Range(1, 16);
-                                    break;
-                                case 1:
-                                    randomNum = Random.Range(16, 31);
-                                    break;
-                                case 2:
-                                    randomNum = Random.Range(31, 46);
-                                    break;
-                                case 3:
-                                    randomNum = Random.Range(46, 61);
-                                    break;
-                                case 4:
-                                    randomNum = Random.Range(61, 76);
-                                    break;
-                            }
-                            temptext = bp.bingoNumbers[i, j].GetComponent<Text>();
-                            //bp.bingoNumbers[i, j].text = randNum.ToString();
-                            SendUpdate("RANDNUM", randNum.ToString());
-                        }
-                    }
-
-                }
-            }
-            if (IsClient)
-            {
-                Debug.Log("in client randNum");
-                temptext.text = value;
-            }
+            calledNumberText.text = "Winner has been found, Server shutting down in 20 Seconds, Thank you for Playing.";
         }
     }
 
@@ -117,18 +55,19 @@ public class GameMasterScript : NetworkComponent
     {
         if (IsServer)
         {
-            // SendUpdate("SETBOARD", "wow");
 
         }
     }
 
     public override IEnumerator SlowUpdate()
     {
+        BingoPlayer[] BingoPlayerarr = FindObjectsOfType<BingoPlayer>();
         while (!gameStarted && IsServer)
         {
             bool readyGo = true;
+            BingoPlayerarr = FindObjectsOfType<BingoPlayer>();
             int count = 0;
-            foreach (BingoPlayer bp in GameObject.FindObjectsOfType<BingoPlayer>())
+            foreach (BingoPlayer bp in BingoPlayerarr)
             {
                 if (!bp.isReady)
                 {
@@ -146,52 +85,30 @@ public class GameMasterScript : NetworkComponent
             //Debug.Log(GameObject.FindObjectsOfType<BingoPlayer>().Length);
             yield return new WaitForSeconds(2f);
         }
-        if (IsServer && gameStarted)
+
+        if (IsServer)
         {
-            SendUpdate("RANDNUM", "one");
-        }
-    
-
-            /*
-            foreach (BingoPlayer bp in GameObject.FindObjectsOfType<BingoPlayer>())
-            {
-                Debug.Log("Creating bingo card");
-                for (int i = 0; i < 5; i++)
-                {
-                    for (int j = 0; j < 5; j++)
-                    {
-                        bp.bingoNumbers[j, i] = MyCore.NetCreateObject(1, this.Owner, this.transform.position, Quaternion.identity).GetComponent<Text>();
-
-                        //bingoNumbers[j, i] = Instantiate(bingoNumberText).GetComponent<Text>();
-                        bp.bingoNumbers[j, i].transform.SetParent(bp.gameObject.transform.GetChild(2).transform);
-                    }
-                }
-            }
-            if (IsServer)
-            {
-                //SendUpdate("SETBOARD", "wow");
-            }
-            foreach (BingoPlayer bp in GameObject.FindObjectsOfType<BingoPlayer>())
-            {
-                for (int i = 0; i < 5; i++)
-                {
-                    for (int j = 0; j < 5; j++)
-                    {
-                        //temp = bp.transform.GetChild(2).gameObject;
-                        //MyCore.NetCreateObject(1, bp.Owner, bp.transform.position, Quaternion.identity).transform.SetParent(temp.transform);
-
-                    }
-                }
-            }*/
-        
-        while (IsServer)
-        {
+            Debug.Log("Right before GAMESTART");
             SendUpdate("GAMESTART", gameStarted.ToString());
+        }
+
+        int index = 0;
+        var randomNumbers = Enumerable.Range(1, 75).OrderBy(x => Random.value).ToList();
+
+        while (IsServer && !winnerFound)
+        {
 
             if (gameStarted)
             {
-                randomNum = Random.Range(1, 76);
+
+                randomNum = randomNumbers[index];
+                index++;
+
                 SendUpdate("CALL", randomNum.ToString());
+                foreach (BingoPlayer bp in BingoPlayerarr)
+                {
+                    bp.FindValue(randomNum.ToString());
+                }
                 yield return new WaitForSeconds(1f);
                 //calledNumberText.text = "Number called: " + randomNum.ToString();
             }
@@ -203,20 +120,12 @@ public class GameMasterScript : NetworkComponent
             }
             yield return new WaitForSeconds(0.1f);
         }
-
-
-
-
-        /*
-        if(gameStarted && IsServer)
+        if (IsServer)
         {
-            int randomNum;
-            randomNum = Random.Range(1, 100);
-            SendUpdate("CALL", randomNum.ToString());
-            //calledNumberText.text = "Number called: " + randomNum.ToString();
-            yield return new WaitForSeconds(1f);
-        }*/
-
+            SendUpdate("WINF", "wow");
+            yield return new WaitForSeconds(20f);
+            StartCoroutine(MyCore.DisconnectServer());
+        }
     }
 
     // Start is called before the first frame update

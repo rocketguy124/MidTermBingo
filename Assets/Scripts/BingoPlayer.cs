@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using NETWORK_ENGINE;
 using UnityEngine.UI;
+using System.Linq;
 
 public class BingoPlayer : NetworkComponent
 {
@@ -19,6 +20,7 @@ public class BingoPlayer : NetworkComponent
     public Text[,] bingoNumbers = new Text[5,5];
     public Text bingoNumberText;
     public int countX , countY = 0;
+    public string message = "";
 
     public override void HandleMessage(string flag, string value)
     {
@@ -55,30 +57,34 @@ public class BingoPlayer : NetworkComponent
         
         if(flag == "RANDNUM")
         {
-            if (IsServer)
+            if (IsClient)
             {
+                string[] strArr = value.Split(',');
                 for (int i = 0; i < 5; i++)
                 {
                     for (int j = 0; j < 5; j++)
                     {
-                        bingoNumbers[i, j].text = value;
+                        bingoNumbers[i, j].text = strArr[i*5+j];
                     }
                 }
             }
         }
-       
+        if(flag == "MARK")
+        {
+            int i = int.Parse(value[0].ToString());
+            int j = int.Parse(value[2].ToString());
+
+            bingoNumbers[i, j].color = Color.red;
+
+        }
+        if(flag == "WIN")
+        {
+            gameObject.GetComponent<Image>().color = new Color32(224, 108, 22, 128);
+        }
     }
 
     public override void NetworkedStart()
     {
-
-        int randomNum = 0;
-        
-        if (IsServer)
-        {
-            //SendUpdate("BOARDCREATE", true.ToString());
-            
-        }
         
     }
 
@@ -89,36 +95,26 @@ public class BingoPlayer : NetworkComponent
             readyToggle.interactable = false;
             nameField.interactable = false;
         }
-        if (IsLocalPlayer)
+        if (IsServer)
         {
             int randNum = 0;
+            message = "";
+
+
             Debug.Log("In the SlowUpdate of GameMaster right before object creation");
             for (int i = 0; i < 5; i++)
             {
+                var randomNumbers = Enumerable.Range(i*15+1, 15).OrderBy(x => Random.value).Take(5).ToList();
+
                 for (int j = 0; j < 5; j++)
                 {
-                    switch (i)
-                    {
-                        case 0:
-                            randNum = Random.Range(1, 16);
-                            break;
-                        case 1:
-                            randNum = Random.Range(16, 31);
-                            break;
-                        case 2:
-                            randNum = Random.Range(31, 46);
-                            break;
-                        case 3:
-                            randNum = Random.Range(46, 61);
-                            break;
-                        case 4:
-                            randNum = Random.Range(61, 76);
-                            break;
-                    }
-                    bingoNumbers[j, i].text = randNum.ToString();
-                    SendCommand("RANDNUM", randNum.ToString());
+                    randNum = randomNumbers[j];
+                    bingoNumbers[i, j].text = randNum.ToString();
+                    message += randNum.ToString() + "," ;
                 }
+                
             }
+            SendUpdate("RANDNUM",message);
         }
         while (IsConnected)
         {
@@ -138,6 +134,7 @@ public class BingoPlayer : NetworkComponent
                 if (IsDirty)
                 {
                     SendUpdate("NAME", name);
+                    SendUpdate("RANDNUM", message);
                     SendUpdate("READY", isReady.ToString());
                     IsDirty = false;
                 }
@@ -152,8 +149,6 @@ public class BingoPlayer : NetworkComponent
     void Start()
     {
         GameObject temp = GameObject.Find("GameCanvas");
-        int randomNum = 0;
-
 
         if (temp == null)
         {
@@ -163,29 +158,16 @@ public class BingoPlayer : NetworkComponent
         {
             this.transform.SetParent(temp.transform);
         }
-
-
-
-        //if (IsServer)
-        // {
+        
         for (int i = 0; i < 5; i++)
         {
             for (int j = 0; j < 5; j++)
             {
-                //bingoNumbers[j, i] = gameObject.transform.GetChild((i * 5) + j).GetComponent<Text>();
-                //bingoNumbers[j, i] = MyCore.NetCreateObject(1, this.Owner, this.transform.position, Quaternion.identity).GetComponent<Text>();
-
                 bingoNumbers[j, i] = Instantiate(bingoNumberText).GetComponent<Text>();
                 bingoNumbers[j, i].transform.SetParent(this.gameObject.transform.GetChild(2).transform);
                 Debug.Log(bingoNumbers[j, i].ToString());
             }
         }
-        //if (IsServer)
-        //{
-
-            
-            //}
-        //}
     }
 
     // Update is called once per frame
@@ -210,6 +192,53 @@ public class BingoPlayer : NetworkComponent
         {
             SendCommand("READY", r.ToString());
             Debug.Log(r);
+        }
+    }
+    public void FindValue(string s)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            for (int j = 0; j < 5; j++)
+            {
+                if (bingoNumbers[i, j].text == s)
+                {
+                    SendUpdate("MARK", i + " " + j);
+                    bingoNumbers[i, j].color = Color.red;
+                    CheckWinCondition(i, j);
+                    return;
+                }
+            }
+        }
+    }
+    public void CheckWinCondition(int i, int j)
+    {
+        bool horizontal = true;
+        bool vertical = true;
+        bool Diag1 = true;
+        bool Diag2 = true;
+        for (int y = 0; y < 5; y++)
+        {
+            if (bingoNumbers[i, y].color != Color.red)
+            {
+                horizontal = false;
+            }
+            if (bingoNumbers[y, j].color != Color.red)
+            {
+                vertical = false;
+            }
+            if (bingoNumbers[y, y].color != Color.red)
+            {
+                Diag1 = false;
+            }
+            if (bingoNumbers[4-y, y].color != Color.red)
+            {
+                Diag2 = false;
+            }
+        }
+        if (horizontal || vertical || Diag1 || Diag2)
+        {
+            SendUpdate("WIN", "you da winnar");
+            GameMasterScript.winnerFound = true;
         }
     }
 }

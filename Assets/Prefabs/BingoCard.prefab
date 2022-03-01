@@ -1312,6 +1312,9 @@ MonoBehaviour:
   bingoTitleText: {fileID: 1367092960729975058}
   bingoBoardPanel: {fileID: 7120725188509655611}
   bingoNumberText: {fileID: 5546080553097109166, guid: 0eacb3ab1a20f9749affa05df51058de, type: 3}
+  countX: 0
+  countY: 0
+  message: 
 --- !u!1 &4907886521763911743
 GameObject:
   m_ObjectHideFlags: 0
